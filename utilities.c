@@ -1,0 +1,52 @@
+/* 
+   * Print outs to which core MPI rank and OpenMP thread is bind to.
+   * Performs also dummy calculation, increase in execution time indicates
+   * that cores are oversubscribed. Comparing times with single MPI task,
+   * single thread vs. full node gives also hints about effects of CPU
+   * frequency scaling.
+
+   * Copyright (C) 2023 CSC - IT Center for Science
+
+   * This file may be redistributed under the terms of the
+   * GNU General Public License. See accompanying LICENSE for details
+*/
+
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sched.h>
+
+char* get_affinity_str(char *str)
+{
+  cpu_set_t mask;
+  sched_getaffinity(0, sizeof(mask), &mask);
+
+  // Code based on https://github.com/util-linux/util-linux (lib/cpuset.c)
+  char *ptr = str;
+  int i, j, entry_made = 0;
+  for (i = 0; i < CPU_SETSIZE; i++) {
+    if (CPU_ISSET(i, &mask)) {
+      int run = 0;
+      entry_made = 1;
+      for (j = i + 1; j < CPU_SETSIZE; j++) {
+	if (CPU_ISSET(j, &mask)) run++;
+	else break;
+      }
+      if (!run)
+	sprintf(ptr, "%d,", i);
+      else if (run == 1) {
+	sprintf(ptr, "%d,%d,", i, i + 1);
+	i++;
+      } else {
+	sprintf(ptr, "%d-%d,", i, i + run);
+	i += run;
+      }
+      while (*ptr != 0) ptr++;
+    }
+  }
+  ptr -= entry_made;
+  *ptr = '\0';
+  return(str);
+}

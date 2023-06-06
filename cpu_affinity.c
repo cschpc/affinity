@@ -22,6 +22,7 @@
 #include <omp.h>
 
 char* get_affinity_str(char *str);
+char* get_mempolicy_str(char *str);
 
 int main(int argc, char *argv[])
 {
@@ -30,6 +31,7 @@ int main(int argc, char *argv[])
   double z;
   
   char cpu_mask[7 * CPU_SETSIZE], hostname[64]; // core and hostname strings
+  char numa_mask[7 * 8];
 
   MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -39,7 +41,7 @@ int main(int argc, char *argv[])
   gethostname(hostname, sizeof(hostname));
 
 // Reduction should ensure that compiler does not optimize "calculation" away
-#pragma omp parallel private(thread_id, cpu_mask) reduction(+:z)
+#pragma omp parallel private(thread_id, cpu_mask, numa_mask) reduction(+:z)
   {
     thread_id = omp_get_thread_num();
     double t;
@@ -55,10 +57,11 @@ int main(int argc, char *argv[])
     t = MPI_Wtime() - t;
 
     get_affinity_str(cpu_mask);
+    get_mempolicy_str(numa_mask);
 
 #pragma omp critical
-    printf("Rank %03d thread %02d on %s core = %s (%f seconds)\n",
-	   rank, thread_id, hostname, cpu_mask, t);
+    printf("Rank %03d thread %02d on %s core = %s numa = %s (%f seconds)\n",
+	   rank, thread_id, hostname, cpu_mask, numa_mask, t);
   }
 
 // Print to avoid compiler optimizations

@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sched.h>
+#include <numaif.h>
 
 char* get_affinity_str(char *str)
 {
@@ -48,5 +49,37 @@ char* get_affinity_str(char *str)
   }
   ptr -= entry_made;
   *ptr = '\0';
+  return(str);
+}
+
+char* get_mempolicy_str(char *str)
+{
+  unsigned long nodemask;
+  const unsigned long maxnode = 8;
+  get_mempolicy(NULL, &nodemask, maxnode, NULL, MPOL_F_MEMS_ALLOWED);
+
+  int entry_made = 0;
+  for (int i=0; i < maxnode; i++) {
+    if (nodemask & (1 << i)) {
+      int run = 0;
+      entry_made = 1;
+      for (int j = i + 1; j < maxnode; j++) {
+        if (nodemask & (1 << j)) run++;
+        else break;
+      }
+      if (!run)
+        sprintf(str, "%d,", i);
+      else if (run == 1) {
+        sprintf(str, "%d,%d,", i, i + 1);
+        i++;
+      } else {
+        sprintf(str, "%d-%d,", i, i + run);
+        i += run;
+      }
+      while (*str != 0) str++;
+    }
+  }
+  str -= entry_made;
+  *str = '\0';
   return(str);
 }

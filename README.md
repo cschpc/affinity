@@ -17,7 +17,7 @@ Requires MPI and OpenMP.
 
 Compile and run C version:
 ```
-mpicc -o cpu_affinity cpu_affinity.c utilities.c -fopenmp -lm
+mpicc -o cpu_affinity cpu_affinity.c utilities.c -fopenmp -lm -lnuma
 export OMP_NUM_THREADS=<threads>
 mpiexec -np <tasks> ./cpu_affinity
 ```
@@ -25,7 +25,7 @@ mpiexec -np <tasks> ./cpu_affinity
 Compile and run Fortran version:
 ```
 gcc -c utilities.c
-mpif90 -o cpu_affinity cpu_affinity.f90 utilities.o -fopenmp 
+mpif90 -o cpu_affinity cpu_affinity.f90 utilities.o -fopenmp -lnuma
 export OMP_NUM_THREADS=<threads>
 mpiexec -np <tasks> ./cpu_affinity
 ```

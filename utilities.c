@@ -56,7 +56,7 @@ char* get_mempolicy_str(char *str)
 {
   unsigned long nodemask;
   const unsigned long maxnode = 8;
-  get_mempolicy(NULL, &nodemask, maxnode, NULL, MPOL_F_MEMS_ALLOWED);
+  get_mempolicy(NULL, &nodemask, maxnode, NULL, 0);
 
   int entry_made = 0;
   for (int i=0; i < maxnode; i++) {

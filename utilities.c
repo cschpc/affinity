@@ -92,14 +92,12 @@ char* get_mempolicy_str(char *str)
 double get_current_cpu_freq()
 {
   double freq;
-  char str1[80], str2[80], str3[80];
   int hwthread  = sched_getcpu();
   char cmd[] = "awk '/cpu MHz/ {print $4}' /proc/cpuinfo";
 
   FILE *file = popen(cmd, "r");
   if (file == NULL) return 0.0;
-  for (int i=0; i < hwthread; i++) {
-    //int n = fscanf(file, "%s %s %s %lf", str1, str2, str2, &freq);
+  for (int i=0; i <= hwthread; i++) {
     int n = fscanf(file, "%lf", &freq);
     if (n != 1) return 0.0;
   }

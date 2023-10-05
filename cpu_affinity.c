@@ -23,11 +23,13 @@
 
 char* get_affinity_str(char *str);
 char* get_mempolicy_str(char *str);
+double get_current_cpu_freq();
 
 int main(int argc, char *argv[])
 {
   int rank, thread_id, provided;
-  int niter = 80000000;  // number of iterations per FOR loop
+  int ninner = 800000; // Number of iterations between calls to cpu freq
+  const int nouter = 100;  
   double z;
   
   char cpu_mask[7 * CPU_SETSIZE], hostname[64]; // core and hostname strings
@@ -44,24 +46,32 @@ int main(int argc, char *argv[])
 #pragma omp parallel private(thread_id, cpu_mask, numa_mask) reduction(+:z)
   {
     thread_id = omp_get_thread_num();
-    double t;
+    double t, cpu_freq;
 
     z = 0.0;
+    cpu_freq = 0.0;
+    int i = 0;
     t = MPI_Wtime();
-    for (int i=0; i<niter; i++)
-      {
+    // for (int i=0; i<niter; i++)
+    for (int n=0; n<nouter; n++) {
+      cpu_freq += get_current_cpu_freq();
+      for (int j=0; j<ninner; j++,i++) {
 	double x = cos(i*0.1)*exp(i*0.04);
 	double y = sin(i*0.1)*exp(i*0.04);
 	z += ((x*x)+(y*y));  
       }
+    }
     t = MPI_Wtime() - t;
 
     get_affinity_str(cpu_mask);
     get_mempolicy_str(numa_mask);
+    cpu_freq /= nouter;
+    cpu_freq *= 1.e-3;
 
 #pragma omp critical
-    printf("Rank %03d thread %02d on %s core = %s numa = %s (%f seconds)\n",
-	   rank, thread_id, hostname, cpu_mask, numa_mask, t);
+    printf("Rank %03d thread %02d on %s core = %s numa = %s (%f s, running at %4.2f GHz)\n",
+	   rank, thread_id, hostname, cpu_mask, numa_mask, t, cpu_freq);
+
   }
 
 // Print to avoid compiler optimizations

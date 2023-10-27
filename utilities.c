@@ -17,7 +17,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <sched.h>
+#ifdef NUMA
 #include <numaif.h>
+#endif
 
 char* get_affinity_str(char *str)
 {
@@ -52,6 +54,7 @@ char* get_affinity_str(char *str)
   return(str);
 }
 
+#ifdef NUMA
 char* get_mempolicy_str(char *str)
 {
   unsigned long nodemask;
@@ -88,6 +91,7 @@ char* get_mempolicy_str(char *str)
   *str = '\0';
   return(str);
 }
+#endif
 
 double get_current_cpu_freq()
 {
